@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Pets para Adoção</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>🐾 Au-doção 🐾</h1>
+
+<form id="form-pet">
+    <input type="hidden" id="id">
+    <input type="text" id="nome" placeholder="Nome do pet" required>
+    <input type="text" id="especie" placeholder="Espécie (cachorro, gato...)" required>
+    <input type="number" id="idade" placeholder="Idade" required>
+    <input type="text" id="descricao" placeholder="Descrição (carinhoso, brincalhão...)" required>
+    <button type="submit">Salvar</button>
+</form>
+
+<table>
+    <thead>
+    <tr>
+        <th>Nome</th>
+        <th>Espécie</th>
+        <th>Idade</th>
+        <th>Descrição</th>
+        <th>Ações</th>
+    </tr>
+    </thead>
+    <tbody id="tabela-pets"></tbody>
+</table>
+
+<script>
+    const apiUrl = "http://localhost:8080/pets";
+
+    const form = document.getElementById("form-pet");
+    const tabela = document.getElementById("tabela-pets");
+
+    async function carregarPets() {
+        const res = await fetch(apiUrl);
+        const pets = await res.json();
+        tabela.innerHTML = "";
+        pets.forEach(p => {
+            tabela.innerHTML += `
+                <tr>
+                    <td>${p.nome}</td>
+                    <td>${p.especie}</td>
+                    <td>${p.idade}</td>
+                    <td>${p.descricao}</td>
+                    <td>
+                        <button onclick="editar(${p.id}, '${p.nome}', '${p.especie}', ${p.idade}, '${p.descricao}')">Editar</button>
+                        <button onclick="deletar(${p.id})">Excluir</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("id").value;
+        const pet = {
+            nome: document.getElementById("nome").value,
+            especie: document.getElementById("especie").value,
+            idade: document.getElementById("idade").value,
+            descricao: document.getElementById("descricao").value
+        };
+
+        if (id) {
+            await fetch(`${apiUrl}/${id}`, { method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify(pet) });
+        } else {
+            await fetch(apiUrl, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(pet) });
+        }
+
+        form.reset();
+        carregarPets();
+    });
+
+    async function deletar(id) {
+        await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+        carregarPets();
+    }
+
+    function editar(id, nome, especie, idade, descricao) {
+        document.getElementById("id").value = id;
+        document.getElementById("nome").value = nome;
+        document.getElementById("especie").value = especie;
+        document.getElementById("idade").value = idade;
+        document.getElementById("descricao").value = descricao;
+    }
+
+    carregarPets();
+</script>
+</body>
+</html>
